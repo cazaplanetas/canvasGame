@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Mi SuperJuego</title>
+	
+	
+</head>
+
+<body>
+	<canvas id="canvas" width="500" height="350">Para jugar necesitas actualizar tu navegador</canvas>
+	
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+	
+	<script>
+		
+		$(document).ready(function(){
+		
+			$(document).on("keydown", function(event){
+				var key = event.keyCode;
+				
+				switch(key){
+					case 39:
+						player.direction = "r";
+						break;
+					case 37:
+						player.direction = "l";
+						break;
+					case 38:
+						player.direction = "t";
+						break;
+					case 40:
+						player.direction = "d";
+						break;
+				}
+			});
+			var list = "";
+			var canvas = $("#canvas")[0];
+			var ctx = canvas.getContext("2d");
+			var cWidth = $("#canvas").width();
+			var cHeight = $("#canvas").height();
+			
+			var timer = 0;
+			
+			var player = [];
+			for(i=0; i < 20; i++)
+			{
+				player[i] = {direction: "s", posX: 100, posY: 100, width: 15, height: 15, ele: i, fm: 1, cm: 1};
+				var playerPos = movRnd(player[i].width, player[i].height);
+				player[i].posX = playerPos.posX;
+				player[i].posY = playerPos.posY;
+				player[i].fm = playerPos.fm;
+				player[i].cm = playerPos.fm;
+				console.log(player[i].cm);
+			}
+			var coin = {draw: false, posX: 0, posY: 0, width: 10, height: 10};
+			
+			var coinPos = movRnd(coin.width, coin.height);
+			
+			
+			var score = 0;
+			
+			coin.posX = coinPos.posX;
+			coin.posY = coinPos.posY;
+			
+			
+			
+			function init(){
+				if(typeof game_loop != "undefined"){
+					clearInterval(game_loop);
+				}
+				
+				game_loop = setInterval(main, 1);
+			}
+			
+			function main(){
+				
+				setBackground();
+				list = "";
+				player.forEach(secmain);
+				for(t in player){
+					list = list + "," + player[t].ele
+				}
+				drawCoin();
+
+				drawText(list);
+			}
+			
+			function secmain(ele, ind)
+			{
+				dirRnd(ele, 0);
+				movePlayer(ele);
+				drawPlayer(ele);
+				if(coin.draw && collision(ele, coin)){
+					coin.draw = false;
+					coinPos = movRnd(coin.width, coin.height);
+					coin.posX = coinPos.posX
+					coin.posY = coinPos.posY
+				}
+				
+				for(i in player){
+				
+					if(ind != i){
+						
+						if(collision(ele, player[i])){
+							player.splice(i, 1);
+							player.splice(ind, 1);
+						}
+					}
+				}
+			}
+			
+			
+			function setBackground(){
+				ctx.save();
+				ctx.fillStyle = "white";
+				ctx.fillRect(0, 0, cWidth, cHeight);
+				ctx.strokeStyle = "black";
+				ctx.strokeRect(0, 0, cWidth, cHeight);
+				ctx.restore();
+			}
+			
+			function drawPlayer(player){
+				ctx.save();
+				ctx.fillStyle = "blue";
+				ctx.fillRect(player.posX , player.posY, player.width, player.height);
+				ctx.restore();
+			}
+			
+			function drawCoin()
+			{
+				if(coin.draw){
+					timer ++;
+				}else{
+					timer = 0;
+				}
+				
+				if(timer > 100){
+					coin.draw = false;
+					coinPos = movRnd(coin.width, coin.height);
+					coin.posX = coinPos.posX
+					coin.posY = coinPos.posY
+				}
+				if((!coin.draw && Math.floor((Math.random() * 400) + 1) < 4) || coin.draw){
+				
+					ctx.save();
+					ctx.fillStyle = "red";
+					ctx.fillRect(coin.posX , coin.posY, coin.width, coin.height);
+					ctx.restore();
+					coin.draw = true;
+				}
+			}
+			
+			function movePlayer(player){
+			
+				if(player.fm > 1) player.cm--;
+				
+				if(player.cm < 0 ) console.log("mal");
+				
+				switch(player.direction){
+					case "r":						
+						if(player.cm <= 1){
+							player.posX += 1;
+							player.cm = player.fm;
+						}
+						
+						if(player.posX >= cWidth - player.width){
+							player.direction = "l";
+						}
+						break;
+					case "l":
+						if(player.cm <= 1){
+							player.posX -= 1;
+							player.cm = player.fm;
+							
+						}
+						if(player.posX <= 1){
+							player.direction = "r";
+						}
+						break;
+					case "t":
+						if(player.cm <= 1){
+							player.posY -= 1;
+							player.cm = player.fm;
+							
+						}
+						if(player.posY <= 1){
+							player.direction = "d";
+						}
+						break;
+					case "d":
+						if(player.cm <= 1){
+							player.posY += 1;
+							player.cm = player.fm;
+							
+						}
+						if(player.posY >= cHeight - player.height){
+							player.direction = "t";;
+						}
+						break;
+					default:
+						player.posX = player.posX;
+						player.posY = player.posY;
+				}
+				
+			}
+			
+			function collision(a, b){
+			
+				if( a.posX + a.width > b.posX &&
+					a.posX < b.posX + b.width &&
+					a.posY < b.posY + b.height &&
+					a.posY + a.height > b.posY ){
+						score++;
+						return true;
+					}
+			}
+			
+			function movRnd(width, height)
+			{
+				posX = Math.floor(Math.random()*(cWidth - width));
+				posY = Math.floor(Math.random()*(cHeight - height));
+				fm = Math.floor((Math.random()*(4)) + 1);
+				return {posX: posX, posY: posY, fm: fm}
+			}
+			
+			function dirRnd(player, borCol)
+			{
+				var d;
+				var c;
+				c = (Math.floor(Math.random()*(20)) < 1 || borCol);
+				
+				if(c) d = Math.floor(Math.random()*(4))
+				
+				switch(d){
+					case 0:
+						player.direction = "r";
+						break;
+					case 1:
+						player.direction = "l";
+						break;
+					case 2:
+						player.direction = "t";
+						break;
+					case 3:
+						player.direction = "d";
+						break;
+				}
+			}
+			
+			function drawText(text)
+			{
+				ctx.font = "20px, Arial";
+				ctx.fillStyle = "black";
+				ctx.fillText(text, 10, 30);
+				
+			}
+			function deg2rad(dreg){
+				return (dreg * Math.PI)/180;
+			}
+			
+			setBackground();
+			init();
+			
+		});
+		
+	</script>
+</body>
+	
+</html>
